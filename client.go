@@ -83,14 +83,20 @@ func (p *Provider) updateDNSRecord(ctx context.Context, domain string, record li
 
 	p.getClient()
 
+	id, err := strconv.Atoi(record.ID)
+	if err != nil {
+		return record, err
+	}
+
 	entry := govultr.DNSRecord{
 		Name: record.Name,
 		Data: record.Value,
 		Type: record.Type,
 		TTL: int(record.TTL.Seconds()),
+		RecordID: id,
 	}
 
-	err := p.client.DNSRecord.Update(ctx, domain, &entry)
+	err = p.client.DNSRecord.Update(ctx, domain, &entry)
 	if err != nil {
 		return record, err
 	}
