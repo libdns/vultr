@@ -8,14 +8,16 @@ import (
 	"github.com/libdns/libdns"
 )
 
-// Provider implements the libdns interfaces for DigitalOcean
+// Provider implements the libdns interfaces for Vultr
+// Adapted from libdns/digitalocean to work with the Vultr API
 type Provider struct {
 	Client
-	// APIToken is the DigitalOcean API token - see https://www.digitalocean.com/docs/apis-clis/api/create-personal-access-token/
+	// APIToken is the Vultr API token
+	// see https://my.vultr.com/settings/#settingsapi
 	APIToken string `json:"auth_token"`
 }
 
-// unFQDN trims any trailing "." from fqdn. DigitalOcean's API does not use FQDNs.
+// unFQDN trims any trailing "." from fqdn.
 func (p *Provider) unFQDN(fqdn string) string {
 	return strings.TrimSuffix(fqdn, ".")
 }
