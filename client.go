@@ -6,42 +6,42 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vultr/govultr"
 	"github.com/libdns/libdns"
+	"github.com/vultr/govultr"
 )
 
 type Client struct {
-	client *govultr.Client
-	mutex	sync.Mutex
+	vultr *govultr.Client
+	mutex sync.Mutex
 }
 
 func (p *Provider) getClient() error {
-	if p.client == nil { 
-		p.client = govultr.NewClient(nil, p.APIToken)
+	if p.client.vultr == nil {
+		p.client.vultr = govultr.NewClient(nil, p.APIToken)
 	}
 
 	return nil
 }
 
 func (p *Provider) getDNSEntries(ctx context.Context, domain string) ([]libdns.Record, error) {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+	p.client.mutex.Lock()
+	defer p.client.mutex.Unlock()
 
 	p.getClient()
 
 	var records []libdns.Record
-	dns_entries, err := p.client.DNSRecord.List(ctx, domain)
+	dns_entries, err := p.client.vultr.DNSRecord.List(ctx, domain)
 	if err != nil {
 		return records, err
 	}
 
 	for _, entry := range dns_entries {
 		record := libdns.Record{
-			Name: entry.Name,
+			Name:  entry.Name,
 			Value: entry.Data,
-			Type:	entry.Type,
-			TTL:	time.Duration(entry.TTL) * time.Second,
-			ID:		strconv.Itoa(entry.RecordID),
+			Type:  entry.Type,
+			TTL:   time.Duration(entry.TTL) * time.Second,
+			ID:    strconv.Itoa(entry.RecordID),
 		}
 		records = append(records, record)
 	}
@@ -50,12 +50,12 @@ func (p *Provider) getDNSEntries(ctx context.Context, domain string) ([]libdns.R
 }
 
 func (p *Provider) addDNSRecord(ctx context.Context, domain string, record libdns.Record) (libdns.Record, error) {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+	p.client.mutex.Lock()
+	defer p.client.mutex.Unlock()
 
 	p.getClient()
 
-	err := p.client.DNSRecord.Create(ctx, domain, record.Type, record.Name, record.Value, int(record.TTL.Seconds()), 0)
+	err := p.client.vultr.DNSRecord.Create(ctx, domain, record.Type, record.Name, record.Value, int(record.TTL.Seconds()), 0)
 	if err != nil {
 		return record, err
 	}
@@ -64,12 +64,12 @@ func (p *Provider) addDNSRecord(ctx context.Context, domain string, record libdn
 }
 
 func (p *Provider) removeDNSRecord(ctx context.Context, domain string, record libdns.Record) (libdns.Record, error) {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+	p.client.mutex.Lock()
+	defer p.client.mutex.Unlock()
 
 	p.getClient()
 
-	err := p.client.DNSRecord.Delete(ctx, domain, record.ID)
+	err := p.client.vultr.DNSRecord.Delete(ctx, domain, record.ID)
 	if err != nil {
 		return record, err
 	}
@@ -78,8 +78,8 @@ func (p *Provider) removeDNSRecord(ctx context.Context, domain string, record li
 }
 
 func (p *Provider) updateDNSRecord(ctx context.Context, domain string, record libdns.Record) (libdns.Record, error) {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+	p.client.mutex.Lock()
+	defer p.client.mutex.Unlock()
 
 	p.getClient()
 
@@ -89,14 +89,14 @@ func (p *Provider) updateDNSRecord(ctx context.Context, domain string, record li
 	}
 
 	entry := govultr.DNSRecord{
-		Name: record.Name,
-		Data: record.Value,
-		Type: record.Type,
-		TTL: int(record.TTL.Seconds()),
+		Name:     record.Name,
+		Data:     record.Value,
+		Type:     record.Type,
+		TTL:      int(record.TTL.Seconds()),
 		RecordID: id,
 	}
 
-	err = p.client.DNSRecord.Update(ctx, domain, &entry)
+	err = p.client.vultr.DNSRecord.Update(ctx, domain, &entry)
 	if err != nil {
 		return record, err
 	}

@@ -11,7 +11,7 @@ import (
 // Provider implements the libdns interfaces for Vultr
 // Adapted from libdns/digitalocean to work with the Vultr API
 type Provider struct {
-	Client
+	client Client
 	// APIToken is the Vultr API token
 	// see https://my.vultr.com/settings/#settingsapi
 	APIToken string `json:"auth_token"`
