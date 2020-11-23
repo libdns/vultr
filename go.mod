@@ -1,4 +1,4 @@
-module example.org/libdns/vultr
+module github.com/libdns/vultr
 
 go 1.15
 
