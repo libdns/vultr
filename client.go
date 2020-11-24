@@ -64,12 +64,26 @@ func (p *Provider) addDNSRecord(ctx context.Context, domain string, record libdn
 }
 
 func (p *Provider) removeDNSRecord(ctx context.Context, domain string, record libdns.Record) (libdns.Record, error) {
+	records, err := p.getDNSEntries(ctx, domain)
+	if err != nil {
+		return record, err
+	}
+
 	p.client.mutex.Lock()
 	defer p.client.mutex.Unlock()
 
 	p.getClient()
 
-	err := p.client.vultr.DNSRecord.Delete(ctx, domain, record.ID)
+	var recordId string
+
+	for _, rec := range records {
+		if rec.Name == record.Name && rec.Value == strconv.Quote(record.Value) {
+			recordId = rec.ID
+			break
+		}
+	}
+
+	err = p.client.vultr.DNSRecord.Delete(ctx, domain, recordId)
 	if err != nil {
 		return record, err
 	}
