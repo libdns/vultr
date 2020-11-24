@@ -55,7 +55,7 @@ func (p *Provider) addDNSRecord(ctx context.Context, domain string, record libdn
 
 	p.getClient()
 
-	err := p.client.vultr.DNSRecord.Create(ctx, domain, record.Type, record.Name, record.Value, int(record.TTL.Seconds()), 0)
+	err := p.client.vultr.DNSRecord.Create(ctx, domain, record.Type, record.Name, strconv.Quote(record.Value), int(record.TTL.Seconds()), 0)
 	if err != nil {
 		return record, err
 	}
@@ -90,7 +90,7 @@ func (p *Provider) updateDNSRecord(ctx context.Context, domain string, record li
 
 	entry := govultr.DNSRecord{
 		Name:     record.Name,
-		Data:     record.Value,
+		Data:     strconv.Quote(record.Value),
 		Type:     record.Type,
 		TTL:      int(record.TTL.Seconds()),
 		RecordID: id,
