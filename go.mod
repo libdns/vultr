@@ -7,4 +7,5 @@ require (
 	github.com/libdns/libdns v0.1.0
 	github.com/vultr/govultr v1.1.1
 	github.com/vultr/govultr/v2 v2.0.0
+	golang.org/x/oauth2 v0.0.0-20201109201403-9fd604954f58
 )
