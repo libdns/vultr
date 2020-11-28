@@ -34,21 +34,31 @@ func (p *Provider) getDNSEntries(ctx context.Context, domain string) ([]libdns.R
 
 	p.getClient()
 
-	var records []libdns.Record
-	dns_entries, _, err := p.client.vultr.DomainRecord.List(ctx, domain, nil)
-	if err != nil {
-		return records, err
-	}
+	listOptions := &govultr.ListOptions{}
 
-	for _, entry := range dns_entries {
-		record := libdns.Record{
-			Name:  entry.Name,
-			Value: entry.Data,
-			Type:  entry.Type,
-			TTL:   time.Duration(entry.TTL) * time.Second,
-			ID:    entry.ID,
+	var records []libdns.Record
+	for {
+		dns_entries, meta, err := p.client.vultr.DomainRecord.List(ctx, domain, listOptions)
+		if err != nil {
+			return records, err
 		}
-		records = append(records, record)
+
+		for _, entry := range dns_entries {
+			record := libdns.Record{
+				Name:  entry.Name,
+				Value: entry.Data,
+				Type:  entry.Type,
+				TTL:   time.Duration(entry.TTL) * time.Second,
+				ID:    entry.ID,
+			}
+			records = append(records, record)
+		}
+
+		if meta.Links.Next == "" {
+			break
+		}
+
+		listOptions.Cursor = meta.Links.Next
 	}
 
 	return records, nil
