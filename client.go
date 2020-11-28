@@ -76,18 +76,15 @@ func (p *Provider) addDNSRecord(ctx context.Context, domain string, record libdn
 		Data: strconv.Quote(record.Value),
 		TTL:  int(record.TTL.Seconds()),
 	}
+
 	rec, err := p.client.vultr.DomainRecord.Create(ctx, domain, domainRecordReq)
 	if err != nil {
 		return record, err
 	}
 
-	return libdns.Record{
-		Name:  rec.Name,
-		Type:  rec.Type,
-		Value: rec.Data,
-		TTL:   time.Duration(rec.TTL) * time.Second,
-		ID:    rec.ID,
-	}, nil
+	record.ID = rec.ID
+
+	return record, nil
 }
 
 func (p *Provider) removeDNSRecord(ctx context.Context, domain string, record libdns.Record) (libdns.Record, error) {
