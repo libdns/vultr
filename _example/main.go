@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/libdns/libdns"
@@ -38,7 +39,6 @@ func main() {
 		}
 	}
 
-
 	if testId != "" {
 		// fmt.Printf("Delete entry for %s (id:%s)\n", testName, testId)
 		// _, err = provider.DeleteRecords(context.TODO(), zone, []libdns.Record{libdns.Record{
@@ -52,7 +52,7 @@ func main() {
 		_, err = provider.SetRecords(context.TODO(), zone, []libdns.Record{libdns.Record{
 			Type:  "TXT",
 			Name:  testName,
-			Value: fmt.Sprintf("\"Replacement test entry created by libdns %s\"", time.Now()),
+			Value: fmt.Sprintf("Replacement test entry created by libdns %s", time.Now()),
 			TTL:   time.Duration(30) * time.Second,
 			ID:    testId,
 		}})
@@ -64,7 +64,7 @@ func main() {
 		_, err = provider.AppendRecords(context.TODO(), zone, []libdns.Record{libdns.Record{
 			Type:  "TXT",
 			Name:  testName,
-			Value: fmt.Sprintf("\"This is a test entry created by libdns %s\"", time.Now()),
+			Value: fmt.Sprintf("This is a test entry created by libdns %s", time.Now()),
 			TTL:   time.Duration(30) * time.Second,
 		}})
 		if err != nil {
