@@ -14,7 +14,7 @@ type Provider struct {
 	client Client
 	// APIToken is the Vultr API token
 	// see https://my.vultr.com/settings/#settingsapi
-	APIToken string `json:"auth_token"`
+	APIToken string `json:"api_token,omitempty"`
 }
 
 // unFQDN trims any trailing "." from fqdn.
