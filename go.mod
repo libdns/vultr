@@ -6,7 +6,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/libdns/libdns v0.2.1
-	github.com/vultr/govultr/v2 v2.11.0
+	github.com/vultr/govultr/v2 v2.17.2
 	golang.org/x/net v0.0.0-20211118161319-6a13c67c3ce4 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	google.golang.org/appengine v1.6.7 // indirect
