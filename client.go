@@ -121,3 +121,35 @@ func (p *Provider) updateDNSRecord(ctx context.Context, domain string, record li
 
 	return record, nil
 }
+
+func (p *Provider) getDNSZones(ctx context.Context) ([]libdns.Zone, error) {
+	p.client.mutex.Lock()
+	defer p.client.mutex.Unlock()
+
+	p.getClient()
+
+	listOptions := &govultr.ListOptions{}
+
+	var zones []libdns.Zone
+	for {
+		dns_zones, meta, _, err := p.client.vultr.Domain.List(ctx, listOptions)
+		if err != nil {
+			return zones, err
+		}
+
+		for _, entry := range dns_zones {
+			zone := libdns.Zone{
+				Name: entry.Domain,
+			}
+			zones = append(zones, zone)
+		}
+
+		if meta.Links.Next == "" {
+			break
+		}
+
+		listOptions.Cursor = meta.Links.Next
+	}
+
+	return zones, nil
+}
