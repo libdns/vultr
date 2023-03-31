@@ -9,7 +9,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/libdns/libdns"
-	"github.com/vultr/govultr/v2"
+	"github.com/vultr/govultr/v3"
 )
 
 type Client struct {
@@ -38,7 +38,7 @@ func (p *Provider) getDNSEntries(ctx context.Context, domain string) ([]libdns.R
 
 	var records []libdns.Record
 	for {
-		dns_entries, meta, err := p.client.vultr.DomainRecord.List(ctx, domain, listOptions)
+		dns_entries, meta, _, err := p.client.vultr.DomainRecord.List(ctx, domain, listOptions)
 		if err != nil {
 			return records, err
 		}
@@ -77,7 +77,7 @@ func (p *Provider) addDNSRecord(ctx context.Context, domain string, record libdn
 		TTL:  int(record.TTL.Seconds()),
 	}
 
-	rec, err := p.client.vultr.DomainRecord.Create(ctx, domain, domainRecordReq)
+	rec, _, err := p.client.vultr.DomainRecord.Create(ctx, domain, domainRecordReq)
 	if err != nil {
 		return record, err
 	}
