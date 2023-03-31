@@ -20,9 +20,9 @@ type Client struct {
 func (p *Provider) getClient() error {
 	if p.client.vultr == nil {
 		oauth_cfg := &oauth2.Config{}
-		oauth_token_source := oauth_cfg.TokenSource(nil, &oauth2.Token{AccessToken: p.APIToken})
+		oauth_token_source := oauth_cfg.TokenSource(context.TODO(), &oauth2.Token{AccessToken: p.APIToken})
 
-		p.client.vultr = govultr.NewClient(oauth2.NewClient(nil, oauth_token_source))
+		p.client.vultr = govultr.NewClient(oauth2.NewClient(context.TODO(), oauth_token_source))
 	}
 
 	return nil
