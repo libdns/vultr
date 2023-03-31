@@ -25,6 +25,15 @@ func main() {
 
 	provider := vultr.Provider{APIToken: token}
 
+	zones, err := provider.ListZones(context.TODO())
+	if err != nil {
+		fmt.Printf("ERROR: %s\n", err.Error())
+	}
+
+	for _, zone := range zones {
+		fmt.Printf("%s\n", zone.Name)
+	}
+
 	records, err := provider.GetRecords(context.TODO(), zone)
 	if err != nil {
 		fmt.Printf("ERROR: %s\n", err.Error())

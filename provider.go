@@ -83,10 +83,21 @@ func (p *Provider) SetRecords(ctx context.Context, zone string, records []libdns
 	return setRecords, nil
 }
 
+func (p *Provider) ListZones(ctx context.Context) ([]libdns.Zone, error) {
+	zones, err := p.getDNSZones(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return zones, nil
+}
+
 // Interface guards
 var (
 	_ libdns.RecordGetter   = (*Provider)(nil)
 	_ libdns.RecordAppender = (*Provider)(nil)
 	_ libdns.RecordSetter   = (*Provider)(nil)
 	_ libdns.RecordDeleter  = (*Provider)(nil)
+	_ libdns.ZoneLister     = (*Provider)(nil)
 )
