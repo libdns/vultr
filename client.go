@@ -2,9 +2,7 @@ package vultr
 
 import (
 	"context"
-	"strconv"
 	"sync"
-	"time"
 
 	"golang.org/x/oauth2"
 
@@ -44,13 +42,11 @@ func (p *Provider) getDNSEntries(ctx context.Context, domain string) ([]libdns.R
 		}
 
 		for _, entry := range dns_entries {
-			record := libdns.Record{
-				Name:  entry.Name,
-				Value: entry.Data,
-				Type:  entry.Type,
-				TTL:   time.Duration(entry.TTL) * time.Second,
-				ID:    entry.ID,
+			record, err := libdnsRecord(entry, domain)
+			if err != nil {
+				return records, err
 			}
+
 			records = append(records, record)
 		}
 
@@ -64,25 +60,28 @@ func (p *Provider) getDNSEntries(ctx context.Context, domain string) ([]libdns.R
 	return records, nil
 }
 
-func (p *Provider) addDNSRecord(ctx context.Context, domain string, record libdns.Record) (libdns.Record, error) {
+func (p *Provider) addDNSRecord(ctx context.Context, domain string, r libdns.Record) (libdns.Record, error) {
 	p.client.mutex.Lock()
 	defer p.client.mutex.Unlock()
 
 	p.getClient()
 
-	domainRecordReq := &govultr.DomainRecordReq{
-		Name: record.Name,
-		Type: record.Type,
-		Data: strconv.Quote(record.Value),
-		TTL:  int(record.TTL.Seconds()),
-	}
+	rr := r.RR()
 
-	rec, _, err := p.client.vultr.DomainRecord.Create(ctx, domain, domainRecordReq)
+	domainRecordReq, err := vultrRecordReq(rr)
 	if err != nil {
-		return record, err
+		return r, err
 	}
 
-	record.ID = rec.ID
+	rec, _, err := p.client.vultr.DomainRecord.Create(ctx, domain, &domainRecordReq)
+	if err != nil {
+		return nil, err
+	}
+
+	record, err := libdnsRecord(*rec, domain)
+	if err != nil {
+		return nil, err
+	}
 
 	return record, nil
 }
@@ -93,7 +92,12 @@ func (p *Provider) removeDNSRecord(ctx context.Context, domain string, record li
 
 	p.getClient()
 
-	err := p.client.vultr.DomainRecord.Delete(ctx, domain, record.ID)
+	recordId, err := GetRecordID(record)
+	if err != nil {
+		return record, err
+	}
+
+	err = p.client.vultr.DomainRecord.Delete(ctx, domain, recordId)
 	if err != nil {
 		return record, err
 	}
@@ -107,14 +111,17 @@ func (p *Provider) updateDNSRecord(ctx context.Context, domain string, record li
 
 	p.getClient()
 
-	domainRecordReq := &govultr.DomainRecordReq{
-		Name: record.Name,
-		Type: record.Type,
-		Data: strconv.Quote(record.Value),
-		TTL:  int(record.TTL.Seconds()),
+	recordId, err := GetRecordID(record)
+	if err != nil {
+		return record, err
 	}
 
-	err := p.client.vultr.DomainRecord.Update(ctx, domain, record.ID, domainRecordReq)
+	domainRecordReq, err := vultrRecordReq(record)
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.client.vultr.DomainRecord.Update(ctx, domain, recordId, &domainRecordReq)
 	if err != nil {
 		return record, err
 	}

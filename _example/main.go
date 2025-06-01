@@ -42,9 +42,15 @@ func main() {
 	testName := "libdns-test"
 	testId := ""
 	for _, record := range records {
-		fmt.Printf("%s (.%s): %s, %s\n", record.Name, zone, record.Value, record.Type)
-		if record.Name == testName {
-			testId = record.ID
+		fmt.Printf("%s (.%s): %s, %s\n", record.RR().Name, zone, record.RR().Data, record.RR().Type)
+
+		recordId, err := vultr.GetRecordID(record)
+		if err != nil {
+			fmt.Printf("ERROR: %s\n", err.Error())
+		}
+
+		if record.RR().Name == testName {
+			testId = recordId
 		}
 	}
 
@@ -58,23 +64,22 @@ func main() {
 		// }
 		// Set only works if we have a record.ID
 		fmt.Printf("Replacing entry for %s\n", testName)
-		_, err = provider.SetRecords(context.TODO(), zone, []libdns.Record{libdns.Record{
-			Type:  "TXT",
-			Name:  testName,
-			Value: fmt.Sprintf("Replacement test entry created by libdns %s", time.Now()),
-			TTL:   time.Duration(30) * time.Second,
-			ID:    testId,
+		_, err = provider.SetRecords(context.TODO(), zone, []libdns.Record{libdns.TXT{
+			Name:         testName,
+			Text:         fmt.Sprintf("Replacement test entry created by libdns %s", time.Now()),
+			TTL:          time.Duration(30) * time.Second,
+			ProviderData: testId,
 		}})
 		if err != nil {
 			fmt.Printf("ERROR: %s\n", err.Error())
 		}
 	} else {
 		fmt.Printf("Creating new entry for %s\n", testName)
-		_, err = provider.AppendRecords(context.TODO(), zone, []libdns.Record{libdns.Record{
-			Type:  "TXT",
-			Name:  testName,
-			Value: fmt.Sprintf("This is a test entry created by libdns %s", time.Now()),
-			TTL:   time.Duration(30) * time.Second,
+		_, err = provider.AppendRecords(context.TODO(), zone, []libdns.Record{libdns.RR{
+			Type: "TXT",
+			Name: testName,
+			Data: fmt.Sprintf("This is a test entry created by libdns %s", time.Now()),
+			TTL:  time.Duration(30) * time.Second,
 		}})
 		if err != nil {
 			fmt.Printf("ERROR: %s\n", err.Error())

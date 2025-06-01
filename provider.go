@@ -3,7 +3,6 @@ package vultr
 import (
 	"context"
 	"strings"
-	"time"
 
 	"github.com/libdns/libdns"
 )
@@ -41,7 +40,6 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 		if err != nil {
 			return nil, err
 		}
-		newRecord.TTL = time.Duration(newRecord.TTL) * time.Second
 		appendedRecords = append(appendedRecords, newRecord)
 	}
 
@@ -57,7 +55,6 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 		if err != nil {
 			return nil, err
 		}
-		deletedRecord.TTL = time.Duration(deletedRecord.TTL) * time.Second
 		deletedRecords = append(deletedRecords, deletedRecord)
 	}
 
@@ -76,7 +73,6 @@ func (p *Provider) SetRecords(ctx context.Context, zone string, records []libdns
 		if err != nil {
 			return setRecords, err
 		}
-		setRecord.TTL = time.Duration(setRecord.TTL) * time.Second
 		setRecords = append(setRecords, setRecord)
 	}
 
