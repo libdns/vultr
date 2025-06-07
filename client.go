@@ -42,11 +42,7 @@ func (p *Provider) getDNSEntries(ctx context.Context, domain string) ([]libdns.R
 		}
 
 		for _, entry := range dns_entries {
-			record, err := libdnsRecord(entry, domain)
-			if err != nil {
-				return records, err
-			}
-
+			record := fromAPIRecord(entry, domain)
 			records = append(records, record)
 		}
 
@@ -66,22 +62,14 @@ func (p *Provider) addDNSRecord(ctx context.Context, domain string, r libdns.Rec
 
 	p.getClient()
 
-	rr := r.RR()
+	domainRecordReq := toDomainRecordReq(r)
 
-	domainRecordReq, err := vultrRecordReq(rr)
+	rec, _, err := p.client.vultr.DomainRecord.Create(ctx, domain, &domainRecordReq)
 	if err != nil {
 		return r, err
 	}
 
-	rec, _, err := p.client.vultr.DomainRecord.Create(ctx, domain, &domainRecordReq)
-	if err != nil {
-		return nil, err
-	}
-
-	record, err := libdnsRecord(*rec, domain)
-	if err != nil {
-		return nil, err
-	}
+	record := fromLibdnsRecord(r, rec.ID)
 
 	return record, nil
 }
@@ -92,7 +80,7 @@ func (p *Provider) removeDNSRecord(ctx context.Context, domain string, record li
 
 	p.getClient()
 
-	recordId, err := GetRecordID(record)
+	recordId, err := getRecordId(record)
 	if err != nil {
 		return record, err
 	}
@@ -111,15 +99,12 @@ func (p *Provider) updateDNSRecord(ctx context.Context, domain string, record li
 
 	p.getClient()
 
-	recordId, err := GetRecordID(record)
+	recordId, err := getRecordId(record)
 	if err != nil {
 		return record, err
 	}
 
-	domainRecordReq, err := vultrRecordReq(record)
-	if err != nil {
-		return nil, err
-	}
+	domainRecordReq := toDomainRecordReq(record)
 
 	err = p.client.vultr.DomainRecord.Update(ctx, domain, recordId, &domainRecordReq)
 	if err != nil {
