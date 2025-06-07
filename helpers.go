@@ -26,9 +26,7 @@ func fromAPIRecord(r govultr.DomainRecord, zone string) VultrRecord {
 
 	// Vultr uses a custom priority field for MX and SRV records
 	data := r.Data
-	if r.Type == "MX" {
-		data = fmt.Sprintf("%d %s", r.Priority, r.Data)
-	} else if r.Type == "SRV" {
+	if r.Type == "MX" || r.Type == "SRV" {
 		data = fmt.Sprintf("%d %s", r.Priority, r.Data)
 	}
 
