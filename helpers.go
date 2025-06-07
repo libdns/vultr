@@ -2,6 +2,7 @@ package vultr
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/libdns/libdns"
@@ -23,9 +24,11 @@ func fromAPIRecord(r govultr.DomainRecord, zone string) VultrRecord {
 	name := libdns.RelativeName(r.Name, zone)
 	ttl := time.Duration(r.TTL) * time.Second
 
-	// Vultr uses a custom priority field for MX records
+	// Vultr uses a custom priority field for MX and SRV records
 	data := r.Data
 	if r.Type == "MX" {
+		data = fmt.Sprintf("%d %s", r.Priority, r.Data)
+	} else if r.Type == "SRV" {
 		data = fmt.Sprintf("%d %s", r.Priority, r.Data)
 	}
 
@@ -51,12 +54,29 @@ func fromLibdnsRecord(r libdns.Record, id string) VultrRecord {
 
 // Converts a libdns.Record to a govultr.DomainRecordReq
 func toDomainRecordReq(r libdns.Record) govultr.DomainRecordReq {
+	data := r.RR().Data
+	var priority int
+
+	// Vultr uses a custom priority field for MX and SRV records
+	if rec, ok := r.RR().Parse(); ok == nil {
+		if r.RR().Type == "MX" {
+			mx := rec.(libdns.MX)
+			priority = int(mx.Preference)
+			data = mx.Target
+		} else if r.RR().Type == "SRV" {
+			srv := rec.(libdns.SRV)
+			priority = int(srv.Priority)
+			data = data[strings.Index(data, " ")+1:]
+		}
+	}
+
 	rr := r.RR()
 	return govultr.DomainRecordReq{
-		Name: rr.Name,
-		Type: rr.Type,
-		TTL:  int(rr.TTL.Seconds()),
-		Data: rr.Data,
+		Name:     rr.Name,
+		Type:     rr.Type,
+		TTL:      int(rr.TTL.Seconds()),
+		Data:     data,
+		Priority: &priority,
 	}
 }
 
