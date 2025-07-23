@@ -2,6 +2,7 @@ package vultr
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"golang.org/x/oauth2"
@@ -27,9 +28,6 @@ func (p *Provider) getClient() error {
 }
 
 func (p *Provider) getDNSEntries(ctx context.Context, domain string) ([]libdns.Record, error) {
-	p.client.mutex.Lock()
-	defer p.client.mutex.Unlock()
-
 	p.getClient()
 
 	listOptions := &govultr.ListOptions{}
@@ -82,7 +80,18 @@ func (p *Provider) removeDNSRecord(ctx context.Context, domain string, record li
 
 	recordId, err := getRecordId(record)
 	if err != nil {
-		return record, err
+		// try to get the ID from API if we don't have it
+		records, err := p.getDNSEntries(ctx, domain)
+		if err != nil {
+			return record, fmt.Errorf("could not get record ID from API")
+		}
+
+		for _, rec := range records {
+			if rec.RR().Name == record.RR().Name {
+				fmt.Println(rec)
+				recordId = rec.(VultrRecord).ID
+			}
+		}
 	}
 
 	err = p.client.vultr.DomainRecord.Delete(ctx, domain, recordId)
@@ -101,7 +110,17 @@ func (p *Provider) updateDNSRecord(ctx context.Context, domain string, record li
 
 	recordId, err := getRecordId(record)
 	if err != nil {
-		return record, err
+		// try to get the ID from API if we don't have it
+		records, err := p.getDNSEntries(ctx, domain)
+		if err != nil {
+			return record, fmt.Errorf("could not get record ID from API")
+		}
+
+		for _, rec := range records {
+			if rec.RR().Data == record.RR().Data {
+				recordId = rec.(VultrRecord).ID
+			}
+		}
 	}
 
 	domainRecordReq := toDomainRecordReq(record)
