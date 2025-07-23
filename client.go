@@ -88,7 +88,6 @@ func (p *Provider) removeDNSRecord(ctx context.Context, domain string, record li
 
 		for _, rec := range records {
 			if rec.RR().Name == record.RR().Name {
-				fmt.Println(rec)
 				recordId = rec.(VultrRecord).ID
 			}
 		}
